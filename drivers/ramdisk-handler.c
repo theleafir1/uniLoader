@@ -7,6 +7,8 @@
 #include <lib/debug.h>
 #include <lib/libfdt/libfdt.h>
 
+extern const void *bootloader_dtb_ptr;
+
 int ramdisk_handler_patch_dtb(const void *fdt, void *buf, int bufsize)
 {
 	int ret, dtb_chosen_offset;
@@ -50,6 +52,25 @@ int ramdisk_handler_patch_dtb(const void *fdt, void *buf, int bufsize)
 		printk(KERN_ERR, "failed to add linux,initrd-end: %s\n", fdt_strerror(ret));
 		return ret;
 	}
+	
+	if (bootloader_dtb_ptr != NULL) {
+		int bl_mem_offset = fdt_path_offset(bootloader_dtb_ptr, "/memory");
+		int target_mem_offset = fdt_path_offset(buf, "/memory@80000000");
+		int reg_len;
+
+		if (bl_mem_offset >= 0 && target_mem_offset >= 0) {
+			const void *reg_prop = fdt_getprop(bootloader_dtb_ptr, bl_mem_offset, "reg", &reg_len);
+			
+			if (reg_prop && reg_len > 0) {
+				ret = fdt_setprop(buf, target_mem_offset, "reg", reg_prop, reg_len);
+                if (ret < 0) {
+		           printk(KERN_ERR, "failed to transfer memory: %s\n", fdt_strerror(ret));
+		           return ret;
+	            }
+				printk(KERN_INFO, "successfully transferred vendor memory to memory@80000000!\n");
+			}
+		}
+	} else printk(KERN_ERR, "Bootloader didn't pass dtb?");
 
 	return 0;
 }

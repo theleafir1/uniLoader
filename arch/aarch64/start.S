@@ -8,6 +8,12 @@
 #include "linux-kernel-image-header.h"
 #endif
 
+.section .data
+.align 3
+.global bootloader_dtb_ptr
+bootloader_dtb_ptr:
+    .quad 0x0
+
 .section .text
 
 #if defined(CONFIG_LINUX_KRNL_HEADER_IMG) && !defined(CONFIG_POSITION_INDEPENDENT)
@@ -22,7 +28,10 @@ _stack_size:
 
 .align 4
 #endif
+
 ENTRY(_start)
+    /* Save BL's dtb for later */
+    mov     x19, x0
 	/* Set up the base address for the stack */
 	adrp    x0, _stack_end      /* Load page of the _stack_end symbol */
 	add     x0, x0, #:lo12:_stack_end  /* Add the offset within the page */
@@ -41,7 +50,9 @@ ENTRY(_start)
 	str     xzr, [x0], #8
 	b       1b
 2:
-
+    /* Save BL's dtb for later */
+    adrp    x9, bootloader_dtb_ptr
+	str     x19, [x9, #:lo12:bootloader_dtb_ptr]
 	/* Fall through */
 	adrp    x0, dtb             /* Load page of dtb */
 	add     x0, x0, #:lo12:dtb  /* Add offset within the page */
