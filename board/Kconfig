@@ -190,6 +190,13 @@ menu "Device Support"
 		help
 		  Say Y if you want to include support for Realme C71
 
+	config REALME_LUNAA
+		bool "Support for Realme GT Master Edition"
+		default n
+		depends on SM7325
+		help
+		  Say Y if you want to include support for Realme GT Master Edition
+
 	config SAMSUNG_A10
 		bool "Support for Samsung Galaxy A10"
 		default n
